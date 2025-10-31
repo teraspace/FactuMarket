@@ -42,3 +42,19 @@ curl -X POST http://localhost:5002/facturas \
 - `Infrastructure::Services::AuditoriaGateway` envía eventos al microservicio `auditoria` (configurable con `AUDITORIA_URL`, por defecto `http://auditoria:5003`).
 
 El repositorio mantiene las invariantes del dominio y, tras persistir, registra un evento `CREAR` en auditoría.
+
+## Cómo ejecutar las pruebas
+
+Instala las dependencias de desarrollo y ejecuta la suite de integración end-to-end:
+
+```bash
+cd facturas
+bundle install
+RACK_ENV=test bundle exec rspec
+```
+
+Las pruebas usan SQLite en memoria, Rack::Test y WebMock para simular el servicio de auditoría. El resultado esperado es:
+
+```
+5 examples, 0 failures
+```

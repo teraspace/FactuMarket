@@ -1,6 +1,7 @@
 using ClientesService.Application.Interfaces;
 using ClientesService.Application.UseCases;
 using ClientesService.Infrastructure.Config;
+using ClientesService.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,3 +24,7 @@ app.MapGet("/health", () => Results.Json(new { status = "ok", service = "cliente
 app.Logger.LogInformation("clientes ready");
 
 app.Run("http://0.0.0.0:5001");
+
+public partial class Program
+{
+}

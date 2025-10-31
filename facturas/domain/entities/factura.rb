@@ -30,6 +30,16 @@ module Facturas
           }
         end
 
+        def to_pdf
+          <<~PDF.gsub(/\n+/, "\n").strip
+            FACTURA ##{id}
+            Cliente ID: #{cliente_id}
+            Monto: #{format('%.2f', monto.to_f)}
+            Fecha emisión: #{fecha_emision.to_s}
+            Generada: #{(created_at || Time.now.utc).iso8601}
+          PDF
+        end
+
         private
 
         def normalize_created_at(value)

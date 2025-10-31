@@ -16,7 +16,17 @@ public class ClienteDto
     public string Nombre { get; set; } = string.Empty;
 
     /// <summary>
-    /// Email del cliente.
+    /// Número de identificación del cliente.
     /// </summary>
-    public string Email { get; set; } = string.Empty;
+    public string Identificacion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Correo electrónico del cliente.
+    /// </summary>
+    public string Correo { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Dirección física del cliente.
+    /// </summary>
+    public string Direccion { get; set; } = string.Empty;
 }

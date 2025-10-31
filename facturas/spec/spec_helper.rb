@@ -2,9 +2,8 @@ ENV['RACK_ENV'] ||= 'test'
 require 'tmpdir'
 require 'fileutils'
 
-ENV['SQLITE_PATH'] ||= File.join(Dir.tmpdir, 'facturas_test.sqlite3')
-FileUtils.rm_f(ENV['SQLITE_PATH'])
-FileUtils.mkdir_p(File.dirname(ENV['SQLITE_PATH']))
+ENV['SQLITE_PATH'] = 'sqlite::memory:'
+FileUtils.mkdir_p(File.join(Dir.tmpdir, 'facturas_tests'))
 ENV['AUDITORIA_URL'] ||= 'http://auditoria.test:5003'
 
 require 'rack/test'
@@ -27,6 +26,8 @@ module RSpecRackApp
   end
 end
 
+Facturas::Interfaces::API.set :environment, :test
+
 RSpec.configure do |config|
   config.include RSpecRackApp
 
@@ -43,4 +44,8 @@ RSpec.configure do |config|
   config.disable_monkey_patching!
   config.order = :random
   Kernel.srand config.seed
+
+  config.after do
+    WebMock.reset!
+  end
 end

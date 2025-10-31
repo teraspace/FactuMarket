@@ -18,11 +18,15 @@ module Facturas
         repository = Facturas::Infrastructure::Persistence::FacturaRepositoryImpl.new
         validator = Facturas::Domain::Services::ValidarFactura.new
         auditoria = Facturas::Infrastructure::Services::AuditoriaGateway.new
+        dian = Facturas::Infrastructure::External::DianHttpClient.new
+        correo = Facturas::Infrastructure::External::EmailClient.new
 
         crear_factura = Facturas::Application::UseCases::CrearFactura.new(
           repository: repository,
           validator: validator,
-          auditoria_gateway: auditoria
+          auditoria_gateway: auditoria,
+          dian: dian,
+          correo: correo
         )
         obtener_factura = Facturas::Application::UseCases::ObtenerFactura.new(repository: repository)
         listar_facturas = Facturas::Application::UseCases::ListarFacturas.new(repository: repository)

@@ -68,3 +68,21 @@ Este servicio incluye una interfaz de gateway (`DianGateway`) que representa la 
 ```
 
 Esto demuestra cómo la arquitectura está preparada para cumplir con los requerimientos normativos sin comprometer la independencia del dominio.
+
+### ✉️ Envío de factura al cliente (Notificaciones)
+
+El microservicio **Facturas** incluye un gateway de notificaciones (`EmailGateway` / `EmailClient`) que simula el envío de la factura electrónica validada al correo del cliente. En un entorno real, este adaptador se integraría con servicios como AWS SES, SendGrid o un SMTP corporativo. Cada envío genera un evento "NOTIFICAR" registrado en el servicio **Auditoría**.
+
+```ruby
+@correo.enviar_factura(cliente.email, factura.to_pdf)
+```
+
+Esto mantiene el dominio desacoplado mientras se prepara la arquitectura para notificaciones reales.
+
+### 🧪 Pruebas de Integración End-to-End
+
+Estas pruebas validan el flujo completo de Facturación Electrónica: emisión de factura, envío a la DIAN, notificación al cliente y registro de evento en Auditoría. Se ejecutan con:
+
+```bash
+RACK_ENV=test rspec spec/integration
+```

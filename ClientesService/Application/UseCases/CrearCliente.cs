@@ -21,7 +21,9 @@ public class CrearCliente
         var entity = new Cliente
         {
             Nombre = dto.Nombre,
-            Email = dto.Email
+            Identificacion = dto.Identificacion,
+            Correo = dto.Correo,
+            Direccion = dto.Direccion
         };
 
         var created = await _repository.CrearAsync(entity, cancellationToken);
@@ -30,7 +32,9 @@ public class CrearCliente
         {
             Id = created.Id,
             Nombre = created.Nombre,
-            Email = created.Email
+            Identificacion = created.Identificacion,
+            Correo = created.Correo,
+            Direccion = created.Direccion
         };
     }
 }

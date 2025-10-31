@@ -22,7 +22,9 @@ public class ListarClientes
         {
             Id = entity.Id,
             Nombre = entity.Nombre,
-            Email = entity.Email
+            Identificacion = entity.Identificacion,
+            Correo = entity.Correo,
+            Direccion = entity.Direccion
         });
     }
 }

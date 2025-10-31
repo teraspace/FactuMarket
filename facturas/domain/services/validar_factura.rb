@@ -10,15 +10,15 @@ module Facturas
 
         class ValidationError < StandardError; end
 
-        Result = Struct.new(:cliente_id, :monto, :fecha_emision, keyword_init: true)
+        Result = Struct.new(:cliente_id, :cliente, :monto, :fecha_emision, keyword_init: true)
 
         DEFAULT_CLIENTS = {
-          '1' => 'Cliente Demo',
-          '123' => 'Cliente Principal'
+          '1' => { nombre: 'Cliente Demo', email: 'demo1@factumarket.test' },
+          '123' => { nombre: 'Cliente Principal', email: 'principal@factumarket.test' }
         }.freeze
 
         def initialize(clientes: DEFAULT_CLIENTS)
-          @clientes = clientes.transform_keys(&:to_s)
+          @clientes = normalizar_clientes(clientes)
         end
 
         def call(cliente_id:, monto:, fecha_emision:)
@@ -28,6 +28,7 @@ module Facturas
 
           Result.new(
             cliente_id: cliente.id,
+            cliente: cliente,
             monto: monto_vo,
             fecha_emision: fecha_vo
           )
@@ -41,10 +42,30 @@ module Facturas
           id_normalizado = cliente_id.to_s.strip
           raise ValidationError, 'cliente_id es requerido' if id_normalizado.empty?
 
-          nombre = @clientes[id_normalizado]
-          raise ValidationError, 'cliente_id no válido' unless nombre
+          datos = @clientes[id_normalizado]
+          raise ValidationError, 'cliente_id no válido' unless datos
 
-          Facturas::Domain::Entities::Cliente.new(id: id_normalizado, nombre: nombre)
+          Facturas::Domain::Entities::Cliente.new(id: id_normalizado, nombre: datos[:nombre], email: datos[:email])
+        end
+
+        def normalizar_clientes(clientes)
+          clientes.transform_keys(&:to_s).transform_values do |valor|
+            case valor
+            when String
+              { nombre: valor, email: generar_email(valor) }
+            when Hash
+              nombre = valor[:nombre] || valor['nombre']
+              email = valor[:email] || valor['email'] || generar_email(nombre)
+              { nombre: nombre, email: email }
+            else
+              raise ArgumentError, 'Formato de cliente inválido'
+            end
+          end
+        end
+
+        def generar_email(nombre)
+          base = nombre.to_s.downcase.gsub(/\s+/, '.')
+          "#{base}@factumarket.test"
         end
       end
     end

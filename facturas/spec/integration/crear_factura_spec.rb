@@ -34,7 +34,11 @@ RSpec.describe 'Creación de facturas', :integration do
     expect(record.cliente_id).to eq('123')
     expect(record.monto).to eq(4500.0)
 
-    expect(a_request(:post, auditoria_endpoint)).to have_been_made.once
+    expect(a_request(:post, auditoria_endpoint)).to have_been_made.twice
+    expect(WebMock).to have_requested(:post, auditoria_endpoint)
+      .with(body: hash_including('accion' => 'CREAR')).once
+    expect(WebMock).to have_requested(:post, auditoria_endpoint)
+      .with(body: hash_including('accion' => 'NOTIFICAR')).once
   end
 
   it 'rechaza creación con monto inválido' do

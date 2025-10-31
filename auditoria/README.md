@@ -42,3 +42,10 @@ curl http://localhost:5003/auditoria/1
 docker build -t auditoriaservice .
 docker run -p 5003:5003 auditoriaservice
 ```
+
+### Pruebas de integración Auditoría
+
+```bash
+bundle install
+RACK_ENV=test rspec spec/integration
+```

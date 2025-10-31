@@ -63,17 +63,31 @@ module Facturas
           end
 
           def ensure_schema!
-            return if ActiveRecord::Base.connection.data_source_exists?(:facturas)
-
             ActiveRecord::Schema.define do
-              create_table :facturas, id: :string, primary_key: :id do |t|
-                t.string  :cliente_id, null: false
-                t.decimal :monto, precision: 15, scale: 2, null: false
-                t.date    :fecha_emision, null: false
-                t.timestamps precision: 6, null: false
+              unless ActiveRecord::Base.connection.data_source_exists?(:facturas)
+                create_table :facturas, id: :string, primary_key: :id do |t|
+                  t.string  :cliente_id, null: false
+                  t.decimal :monto, precision: 15, scale: 2, null: false
+                  t.date    :fecha_emision, null: false
+                  t.timestamps precision: 6, null: false
+                end
+
+                add_index :facturas, :fecha_emision
               end
 
-              add_index :facturas, :fecha_emision
+              unless ActiveRecord::Base.connection.data_source_exists?(:outbox_events)
+                create_table :outbox_events, id: :string, primary_key: :id do |t|
+                  t.string :event_type, null: false
+                  t.string :entity_id, null: false
+                  t.text   :payload, null: false
+                  t.string :status, null: false, default: 'pending'
+                  t.datetime :created_at, null: false, default: -> { 'CURRENT_TIMESTAMP' }
+                  t.datetime :processed_at
+                end
+
+                add_index :outbox_events, :status
+                add_index :outbox_events, :entity_id
+              end
             end
           end
         end

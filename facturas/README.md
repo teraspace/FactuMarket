@@ -97,3 +97,30 @@ Este enfoque deja la arquitectura preparada para integrarse con AWS API Gateway 
 export API_TOKEN="supersecreto123"
 curl -H "Authorization: Bearer $API_TOKEN" http://localhost:5002/facturas
 ```
+
+### 🧮 Consistencia y Patrón Outbox (ACID Distribuido)
+
+Para garantizar atomicidad local y consistencia eventual, **Facturas** usa el patrón Outbox:
+
+- La factura y el evento externo se guardan en la misma transacción usando la tabla `outbox_events` (UUID).
+- Un worker (`RelayOutboxWorker`) reenvía los eventos pendientes hacia Auditoría y Notificaciones, marcando `processed` o `failed` para reintentos.
+- El script `bin/relay_runner.rb` ejecuta el relay (ideal como sidecar o cron). Todos los identificadores usan UUIDv7, facilitando trazabilidad global entre servicios.
+
+```text
+Factura creada (UUIDv7)
+ ├── Guardada en DB (atomicidad local)
+ ├── Evento Outbox registrado
+ ├── Relay envía a Auditoría/Correo
+ └── Auditoría confirma → sistema consistente
+```
+
+### 🕒 Relay Runner (Procesamiento en Segundo Plano)
+
+El componente `Relay Runner` mantiene el outbox procesado en segundo plano mediante **rufus-scheduler**. Ejecuta `RelayOutboxWorker` cada 30 segundos, registra logs de ejecución y reintenta eventos en estado `failed`, asegurando consistencia eventual.
+
+- Puede correrse como sidecar (`docker compose up relay-worker`), servicio background local o tarea programada en AWS ECS.
+- Requiere la variable `AUDITORIA_URL` y acceso a la base de datos.
+
+```bash
+docker compose up relay-worker
+```

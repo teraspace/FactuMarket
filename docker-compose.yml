@@ -1,0 +1,78 @@
+services:
+  clientes:
+    build:
+      context: ./clientes
+    container_name: clientes
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:5001"
+      MONGO_URI: "mongodb://mongo-db:27017/factumarket"
+      ORACLE_CONN: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
+    depends_on:
+      - mongo-db
+      - oracle-db
+    networks:
+      - factumarket-net
+
+  facturas:
+    build:
+      context: ./facturas
+    container_name: facturas
+    ports:
+      - "5002:5002"
+    environment:
+      MONGO_URI: "mongodb://mongo-db:27017/factumarket"
+      ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
+    depends_on:
+      - mongo-db
+      - oracle-db
+    networks:
+      - factumarket-net
+
+  auditoria:
+    build:
+      context: ./auditoria
+    container_name: auditoria
+    ports:
+      - "5003:5003"
+    environment:
+      MONGO_URI: "mongodb://mongo-db:27017/factumarket"
+      ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
+    depends_on:
+      - mongo-db
+      - oracle-db
+    networks:
+      - factumarket-net
+
+  mongo-db:
+    image: mongo:6
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - factumarket-net
+
+  oracle-db:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: oracle-db
+    environment:
+      ORACLE_PWD: "Oracle123"
+      ORACLE_CHARACTERSET: "AL32UTF8"
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+    networks:
+      - factumarket-net
+    # Nota: en hardware Apple Silicon puede ser necesario reemplazar este servicio por una alternativa como SQLite si la imagen oficial no soporta ARM.
+
+networks:
+  factumarket-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  oracle_data:

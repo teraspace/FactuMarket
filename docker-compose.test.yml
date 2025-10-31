@@ -1,0 +1,86 @@
+version: "3.9"
+
+networks:
+  factumarket_test:
+    driver: bridge
+
+services:
+  mongo-db:
+    image: mongo:6
+    container_name: mongo_test
+    environment:
+      - MONGO_INITDB_DATABASE=auditoria_test
+    networks:
+      - factumarket_test
+    restart: unless-stopped
+
+  oracle-db:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: oracle_test
+    environment:
+      - ORACLE_PWD=Oracle123
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+    networks:
+      - factumarket_test
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/oracle/checkDBStatus.sh"]
+      interval: 30s
+      timeout: 20s
+      retries: 20
+
+  auditoria:
+    build: ./auditoria
+    container_name: auditoria_test
+    environment:
+      - RACK_ENV=test
+      - MONGO_URI=mongodb://mongo-db:27017/auditoria_test
+    depends_on:
+      mongo-db:
+        condition: service_started
+    networks:
+      - factumarket_test
+    restart: unless-stopped
+
+  clientes:
+    build: ./clientes
+    container_name: clientes_test
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - DB_PROVIDER=sqlite
+      - ConnectionStrings__Clientes=Data Source=clientes_test.db
+      - DB_MAX_RETRIES=40
+      - DB_RETRY_DELAY_SECONDS=15
+    ports:
+      - "5001:5001"
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    networks:
+      - factumarket_test
+    restart: unless-stopped
+
+  facturas:
+    build: ./facturas
+    container_name: facturas_test
+    environment:
+      - RACK_ENV=test
+      - SQLITE_PATH=/tmp/facturas_test.db
+      - MONGO_URI=mongodb://mongo-db:27017/auditoria_test
+      - AUDITORIA_URL=http://auditoria:5003
+      - DB_ADAPTER=sqlite3
+      - DB_PATH=/tmp/facturas_test.db
+    ports:
+      - "5002:5002"
+    depends_on:
+      clientes:
+        condition: service_started
+      auditoria:
+        condition: service_started
+      oracle-db:
+        condition: service_healthy
+    networks:
+      - factumarket_test
+    restart: unless-stopped

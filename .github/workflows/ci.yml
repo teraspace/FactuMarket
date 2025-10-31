@@ -1,0 +1,136 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      oracle:
+        image: container-registry.oracle.com/database/free:latest
+        ports:
+          - 1521:1521
+        options: >-
+          --shm-size=1g
+          --health-cmd "/opt/oracle/checkDBStatus.sh"
+          --health-interval 30s
+          --health-timeout 20s
+          --health-retries 20
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      RACK_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore ClientesService/ClientesService.csproj
+
+      - name: Build .NET
+        run: dotnet build ClientesService/ClientesService.csproj --configuration Release --no-restore
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install Ruby dependencies
+        run: |
+          bundle install --gemfile=facturas/Gemfile
+          bundle install --gemfile=auditoria/Gemfile
+
+      - name: Run .NET tests
+        run: dotnet test ClientesService.Tests/ClientesService.Tests.csproj --configuration Release
+
+      - name: Run Facturas integration tests
+        run: |
+          cd facturas
+          bundle exec rspec spec/integration
+
+      - name: Run Auditoria integration tests
+        run: |
+          cd auditoria
+          bundle exec rspec spec/integration
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            factumarket/clientes
+            factumarket/facturas
+            factumarket/auditoria
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker images
+        uses: docker/build-push-action@v5
+        with:
+          push: false
+          platforms: linux/amd64
+          tags: |
+            factumarket/clientes:latest
+            factumarket/facturas:latest
+            factumarket/auditoria:latest
+          file: ./docker-compose.yml
+          context: .
+
+      - name: Configure AWS Credentials
+        if: github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        if: github.ref == 'refs/heads/main'
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker images to ECR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker build -t facturas:latest ./facturas
+          docker build -t clientes:latest ./clientes
+          docker build -t auditoria:latest ./auditoria
+
+          docker tag facturas:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/facturas:latest
+          docker tag clientes:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/clientes:latest
+          docker tag auditoria:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/auditoria:latest
+
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/facturas:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/clientes:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/auditoria:latest

@@ -1,0 +1,48 @@
+flowchart TB
+    %% === AWS Arquitectura Escalable FactuMarket ===
+
+    subgraph Internet["🌐 Internet"]
+        U[Usuario / App Cliente]
+    end
+
+    subgraph Entry["AWS Networking Layer"]
+        LB[ALB / API Gateway]
+    end
+
+    subgraph ECS["ECS Fargate Cluster"]
+        C1[Clientes Service (.NET + Oracle RDS)]
+        F1[Facturas Service (Ruby + Oracle RDS)]
+        A1[Auditoría Service (Ruby + DocumentDB)]
+        R1[Relay Worker (Rufus Scheduler / Outbox)]
+    end
+
+    subgraph DB["Persistencia"]
+        RDS[(Amazon RDS – Oracle)]
+        DOCDB[(Amazon DocumentDB – MongoDB compatible)]
+    end
+
+    subgraph External["Servicios externos"]
+        DIAN[(DIAN Gateway Simulado / API Pública)]
+        SQS[(Amazon SQS – opcional para eventos asíncronos)]
+    end
+
+    subgraph Monitor["Observabilidad y Seguridad"]
+        CW[CloudWatch Logs / Metrics]
+        SM[Secrets Manager]
+    end
+
+    U --> LB
+    LB --> F1
+    LB --> C1
+    LB --> A1
+
+    F1 -->|Valida Cliente| C1
+    F1 -->|Registra Evento| A1
+    F1 -->|Publica Evento| R1
+    F1 -->|Valida Factura| DIAN
+    C1 --> RDS
+    F1 --> RDS
+    A1 --> DOCDB
+    R1 --> SQS
+    ECS --> CW
+    ECS --> SM

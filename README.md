@@ -1,4 +1,18 @@
+# 🚀 Puesta en marcha rápida
 
-### ⚙️ CI/CD Pipeline
+```bash
+# 1. Clonar el repositorio
+git clone <repo> factumarket
+cd factumarket
 
-El proyecto incluye un pipeline CI/CD automatizado en GitHub Actions. Ejecuta compilación, pruebas unitarias, pruebas de integración y despliegue a AWS ECR/ECS Fargate en ramas principales. Los secretos (AWS, DB, SMTP, etc.) se gestionan con **GitHub Secrets** y **AWS Secrets Manager**.
+# 2. Levantar todos los servicios
+docker compose up --build
+
+# 3. Ejecutar pruebas de integración
+cd facturas && bundle exec rspec spec/integration
+cd ../ClientesService && dotnet test ClientesService.Tests/ClientesService.Tests.csproj
+
+# 4. Smoke tests (requiere curl y API_TOKEN configurado en los contenedores)
+./smoke_test.sh --clientes http://localhost:5001/health \
+                --facturas http://localhost:5002/health \
+                --auditoria http://localhost:5003/health

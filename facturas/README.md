@@ -58,3 +58,13 @@ Las pruebas usan SQLite en memoria, Rack::Test y WebMock para simular el servici
 ```
 5 examples, 0 failures
 ```
+
+### 🧾 Integración futura con la DIAN (Entidad Tributaria)
+
+Este servicio incluye una interfaz de gateway (`DianGateway`) que representa la conexión con la DIAN. Actualmente utiliza un cliente simulado (`DianHttpClient`) que emula el envío de facturas electrónicas. En un entorno real, se podrá reemplazar por una integración REST/XML con la DIAN sin alterar el dominio.
+
+```ruby
+@dian.enviar_factura(factura.to_h)
+```
+
+Esto demuestra cómo la arquitectura está preparada para cumplir con los requerimientos normativos sin comprometer la independencia del dominio.

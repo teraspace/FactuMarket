@@ -1,8 +1,6 @@
 using ClientesService.Application.Interfaces;
 using ClientesService.Application.UseCases;
 using ClientesService.Infrastructure.Config;
-using ClientesService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,12 +15,7 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Ejecuta migraciones automáticas para SQLite demo.
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ClientesDbContext>();
-    db.Database.EnsureCreated();
-}
+await DatabaseInitializer.EnsureCreatedWithRetryAsync(app.Services, app.Logger, app.Configuration);
 
 app.MapControllers();
 app.MapGet("/health", () => Results.Json(new { status = "ok", service = "clientes" }));

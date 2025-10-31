@@ -7,11 +7,12 @@ module Facturas
       class CrearFactura
         # Caso de uso Application responsable de crear facturas y delegar validaciones al dominio.
 
-        def initialize(repository:, validator:, auditoria_gateway: nil, id_generator: -> { SecureRandom.uuid })
+        def initialize(repository:, validator:, auditoria_gateway: nil, dian: nil, id_generator: -> { SecureRandom.uuid })
           @repository = repository
           @validator = validator
           @id_generator = id_generator
           @auditoria_gateway = auditoria_gateway
+          @dian_gateway = dian
         end
 
         def call(request)
@@ -33,11 +34,20 @@ module Facturas
           )
 
           persisted = @repository.save(factura)
+          enviar_a_dian(persisted)
           registrar_auditoria(persisted)
           persisted
         end
 
         private
+
+        def enviar_a_dian(factura)
+          return unless @dian_gateway
+
+          @dian_gateway.enviar_factura(factura.to_primitives)
+        rescue StandardError => e
+          warn "[WARN] Fallo al enviar a DIAN: #{e.message}"
+        end
 
         def registrar_auditoria(factura)
           return unless @auditoria_gateway

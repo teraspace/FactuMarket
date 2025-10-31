@@ -9,9 +9,15 @@ services:
       ASPNETCORE_URLS: "http://0.0.0.0:5001"
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
+      DB_PROVIDER: "oracle"
+      ConnectionStrings__Clientes: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
+      DB_MAX_RETRIES: "40"
+      DB_RETRY_DELAY_SECONDS: "15"
     depends_on:
-      - mongo-db
-      - oracle-db
+      mongo-db:
+        condition: service_started
+      oracle-db:
+        condition: service_healthy
     networks:
       - factumarket-net
 
@@ -27,8 +33,10 @@ services:
       AUDITORIA_URL: "http://auditoria:5003"
       SQLITE_PATH: "/app/db/facturas.sqlite3"
     depends_on:
-      - mongo-db
-      - oracle-db
+      mongo-db:
+        condition: service_started
+      oracle-db:
+        condition: service_healthy
     networks:
       - factumarket-net
     volumes:
@@ -44,8 +52,10 @@ services:
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
     depends_on:
-      - mongo-db
-      - oracle-db
+      mongo-db:
+        condition: service_started
+      oracle-db:
+        condition: service_healthy
     networks:
       - factumarket-net
 
@@ -71,6 +81,12 @@ services:
       - oracle_data:/opt/oracle/oradata
     networks:
       - factumarket-net
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/bash -c '/opt/oracle/checkDBStatus.sh'"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
     # Nota: en hardware Apple Silicon puede ser necesario reemplazar este servicio por una alternativa como SQLite si la imagen oficial no soporta ARM.
 
 networks:

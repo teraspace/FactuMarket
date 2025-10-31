@@ -4,8 +4,10 @@ WORKDIR /app
 
 RUN apk add --no-cache build-base sqlite-dev
 
-COPY Gemfile ./
-RUN bundle install
+COPY Gemfile Gemfile.lock ./
+RUN bundle config set force_ruby_platform true \
+    && bundle config set build.sqlite3 '--with-sqlite3-dir=/usr' \
+    && bundle install
 
 COPY . .
 

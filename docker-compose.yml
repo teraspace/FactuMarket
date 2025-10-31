@@ -24,11 +24,15 @@ services:
     environment:
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
+      AUDITORIA_URL: "http://auditoria:5003"
+      SQLITE_PATH: "/app/db/facturas.sqlite3"
     depends_on:
       - mongo-db
       - oracle-db
     networks:
       - factumarket-net
+    volumes:
+      - facturas_data:/app/db
 
   auditoria:
     build:
@@ -76,3 +80,4 @@ networks:
 volumes:
   mongo_data:
   oracle_data:
+  facturas_data:

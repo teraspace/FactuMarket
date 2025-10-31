@@ -1,0 +1,7 @@
+example_id                                      | status | run_time        |
+----------------------------------------------- | ------ | --------------- |
+./spec/integration/crear_factura_spec.rb[1:1]   | passed | 0.00221 seconds |
+./spec/integration/crear_factura_spec.rb[1:2]   | passed | 0.00071 seconds |
+./spec/integration/health_spec.rb[1:1]          | passed | 0.00973 seconds |
+./spec/integration/listar_facturas_spec.rb[1:1] | passed | 0.03668 seconds |
+./spec/integration/listar_facturas_spec.rb[1:2] | passed | 0.00266 seconds |

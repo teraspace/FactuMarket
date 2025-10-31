@@ -38,9 +38,9 @@ RSpec.describe 'Consulta de facturas', :integration do
   end
 
   it 'lista facturas dentro de un rango de fechas' do
-    crear_factura(cliente_id: 'A', monto: 100, fecha_emision: '2024-01-01')
-    crear_factura(cliente_id: 'B', monto: 200, fecha_emision: '2024-02-15')
-    crear_factura(cliente_id: 'C', monto: 300, fecha_emision: '2024-03-10')
+    crear_factura(cliente_id: '123', monto: 100, fecha_emision: '2024-01-01')
+    crear_factura(cliente_id: '1', monto: 200, fecha_emision: '2024-02-15')
+    crear_factura(cliente_id: '123', monto: 300, fecha_emision: '2024-03-10')
 
     get '/facturas', { 'fechaInicio' => '2024-02-01', 'fechaFin' => '2024-03-01' }
 
@@ -48,7 +48,7 @@ RSpec.describe 'Consulta de facturas', :integration do
     body = JSON.parse(last_response.body)
     expect(body.size).to eq(1)
     expect(body.first).to include(
-      'cliente_id' => 'B',
+      'cliente_id' => '1',
       'monto' => 200.0,
       'fecha_emision' => '2024-02-15'
     )

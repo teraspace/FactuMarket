@@ -12,7 +12,11 @@ module Facturas
           def establish_connection
             return if ActiveRecord::Base.connected?
 
-            ActiveRecord::Base.default_timezone = :utc
+            if ActiveRecord.respond_to?(:default_timezone=)
+              ActiveRecord.default_timezone = :utc
+            elsif ActiveRecord::Base.respond_to?(:default_timezone=)
+              ActiveRecord::Base.default_timezone = :utc
+            end
 
             config = oracle_available? ? oracle_config : sqlite_config
 

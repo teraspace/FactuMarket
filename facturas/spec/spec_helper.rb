@@ -1,5 +1,10 @@
 ENV['RACK_ENV'] ||= 'test'
-ENV['SQLITE_PATH'] ||= ':memory:'
+require 'tmpdir'
+require 'fileutils'
+
+ENV['SQLITE_PATH'] ||= File.join(Dir.tmpdir, 'facturas_test.sqlite3')
+FileUtils.rm_f(ENV['SQLITE_PATH'])
+FileUtils.mkdir_p(File.dirname(ENV['SQLITE_PATH']))
 ENV['AUDITORIA_URL'] ||= 'http://auditoria.test:5003'
 
 require 'rack/test'

@@ -86,3 +86,14 @@ Estas pruebas validan el flujo completo de Facturación Electrónica: emisión d
 ```bash
 RACK_ENV=test rspec spec/integration
 ```
+
+### 🔒 Seguridad y Autenticación
+
+FactuMarket implementa autenticación basada en **Bearer Token** para proteger los endpoints críticos del microservicio **Facturas**. El token se define en la variable de entorno `API_TOKEN` y cada petición debe enviar el encabezado `Authorization: Bearer <token>`. El middleware `AuthenticationMiddleware` intercepta todas las solicitudes excepto `/health`; si el token es inválido o está ausente, responde HTTP 401 con `{ "error": "Unauthorized" }`.
+
+Este enfoque deja la arquitectura preparada para integrarse con AWS API Gateway + Cognito, proxies inversos (Nginx/Traefik) o servicios de gestión de secretos como AWS Secrets Manager.
+
+```bash
+export API_TOKEN="supersecreto123"
+curl -H "Authorization: Bearer $API_TOKEN" http://localhost:5002/facturas
+```

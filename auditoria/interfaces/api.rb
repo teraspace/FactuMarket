@@ -1,6 +1,7 @@
 require 'sinatra/base'
 require 'json'
 require_relative '../infrastructure/http/controllers/auditoria_controller'
+require_relative '../infrastructure/http/middleware/authentication_middleware'
 
 module Auditoria
   module Interfaces
@@ -16,6 +17,8 @@ module Auditoria
         set :port, 5003
         set :auditoria_controller, Auditoria::Infrastructure::Http::Controllers::AuditoriaController.new
       end
+
+      use Auditoria::Infrastructure::Http::Middleware::AuthenticationMiddleware
 
       before do
         content_type :json

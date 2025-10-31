@@ -1,6 +1,8 @@
 require 'sinatra/base'
 require 'json'
 
+require_relative '../infrastructure/http/middleware/authentication_middleware'
+
 %w[../domain ../application ../infrastructure].each do |path|
   Dir[File.expand_path("#{path}/**/*.rb", __dir__)].sort.each { |file| require file }
 end
@@ -13,6 +15,8 @@ module Facturas
       set :bind, '0.0.0.0'
       set :port, 5002
       set :server, :puma
+
+      use Facturas::Infrastructure::Http::Middleware::AuthenticationMiddleware
 
       configure do
         repository = Facturas::Infrastructure::Persistence::FacturaRepositoryImpl.new

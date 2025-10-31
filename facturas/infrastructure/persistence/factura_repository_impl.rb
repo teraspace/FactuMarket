@@ -21,6 +21,10 @@ module Facturas
           record.cliente_id = factura.cliente_id
           record.monto = factura.monto.to_decimal
           record.fecha_emision = factura.fecha_emision.to_date
+          record.dian_status = factura.dian_status
+          record.dian_uuid = factura.dian_uuid
+          record.dian_response = factura.dian_response
+          record.fecha_validacion_dian = factura.fecha_validacion_dian
           record.save!
           entity_from_record(record)
         end
@@ -48,7 +52,11 @@ module Facturas
             cliente_id: record.cliente_id,
             monto: Facturas::Domain::ValueObjects::Monto.new(record.monto),
             fecha_emision: Facturas::Domain::ValueObjects::FechaEmision.new(record.fecha_emision),
-            created_at: record.created_at
+            created_at: record.created_at,
+            dian_status: record.dian_status,
+            dian_uuid: record.dian_uuid,
+            dian_response: record.dian_response,
+            fecha_validacion_dian: record.fecha_validacion_dian
           )
         end
       end

@@ -18,7 +18,13 @@ module Facturas
           # Simulación de envío; en un escenario real se ejecutaría Net::HTTP.start.
           puts "[INFO] Factura enviada (mock) a la DIAN: #{factura[:id] || factura['id']}"
 
-          { status: 'ok', dian_id: SecureRandom.uuid }
+          {
+            status: 'ACEPTADO',
+            codigo: '200',
+            dian_id: SecureRandom.uuid,
+            mensaje: 'Factura validada correctamente',
+            fecha_recepcion: Time.now.utc.iso8601
+          }
         end
       end
     end

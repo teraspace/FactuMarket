@@ -5,6 +5,7 @@ require 'fileutils'
 ENV['SQLITE_PATH'] = 'sqlite::memory:'
 FileUtils.mkdir_p(File.join(Dir.tmpdir, 'facturas_tests'))
 ENV['AUDITORIA_URL'] ||= 'http://auditoria.test:5003'
+ENV['API_TOKEN'] ||= 'test-token'
 
 require 'rack/test'
 require 'rspec'
@@ -30,6 +31,10 @@ Facturas::Interfaces::API.set :environment, :test
 
 RSpec.configure do |config|
   config.include RSpecRackApp
+
+  config.before do
+    header 'Authorization', "Bearer #{ENV['API_TOKEN']}"
+  end
 
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true

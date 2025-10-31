@@ -69,10 +69,15 @@ module Facturas
                   t.string  :cliente_id, null: false
                   t.decimal :monto, precision: 15, scale: 2, null: false
                   t.date    :fecha_emision, null: false
+                  t.string  :dian_status
+                  t.string  :dian_uuid
+                  t.text    :dian_response
+                  t.datetime :fecha_validacion_dian
                   t.timestamps precision: 6, null: false
                 end
 
                 add_index :facturas, :fecha_emision
+                add_index :facturas, :dian_uuid
               end
 
               unless ActiveRecord::Base.connection.data_source_exists?(:outbox_events)
@@ -89,6 +94,24 @@ module Facturas
                 add_index :outbox_events, :entity_id
               end
             end
+
+            add_column_unless_exists(:facturas, :dian_status, :string)
+            add_column_unless_exists(:facturas, :dian_uuid, :string)
+            add_column_unless_exists(:facturas, :dian_response, :text)
+            add_column_unless_exists(:facturas, :fecha_validacion_dian, :datetime)
+            add_index_unless_exists(:facturas, :dian_uuid)
+          end
+
+          def add_column_unless_exists(table, column, type)
+            return if ActiveRecord::Base.connection.column_exists?(table, column)
+
+            ActiveRecord::Base.connection.add_column(table, column, type)
+          end
+
+          def add_index_unless_exists(table, column)
+            return if ActiveRecord::Base.connection.index_exists?(table, column)
+
+            ActiveRecord::Base.connection.add_index(table, column)
           end
         end
       end

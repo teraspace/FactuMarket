@@ -9,13 +9,18 @@ module Facturas
         # Entidad de dominio que representa el agregado Factura dentro de la capa Domain.
 
         attr_reader :id, :cliente_id, :monto, :fecha_emision, :created_at
+        attr_accessor :dian_status, :dian_uuid, :dian_response, :fecha_validacion_dian
 
-        def initialize(id:, cliente_id:, monto:, fecha_emision:, created_at: nil)
+        def initialize(id:, cliente_id:, monto:, fecha_emision:, created_at: nil, dian_status: nil, dian_uuid: nil, dian_response: nil, fecha_validacion_dian: nil)
           @id = id
           @cliente_id = cliente_id
           @monto = monto
           @fecha_emision = fecha_emision
           @created_at = normalize_created_at(created_at)
+          @dian_status = dian_status
+          @dian_uuid = dian_uuid
+          @dian_response = dian_response
+          @fecha_validacion_dian = normalize_time(fecha_validacion_dian)
 
           validate!
         end
@@ -26,7 +31,11 @@ module Facturas
             cliente_id: cliente_id,
             monto: monto.to_f,
             fecha_emision: fecha_emision.to_s,
-            created_at: created_at&.iso8601
+            created_at: created_at&.iso8601,
+            dian_status: dian_status,
+            dian_uuid: dian_uuid,
+            dian_response: dian_response,
+            fecha_validacion_dian: fecha_validacion_dian&.iso8601
           }
         end
 
@@ -48,6 +57,15 @@ module Facturas
           Time.parse(value.to_s)
         rescue ArgumentError
           raise ArgumentError, 'created_at debe ser un tiempo válido'
+        end
+
+        def normalize_time(value)
+          return nil if value.nil?
+          return value if value.is_a?(Time)
+
+          Time.parse(value.to_s)
+        rescue ArgumentError
+          raise ArgumentError, 'fecha_validacion_dian debe ser un tiempo válido'
         end
 
         def validate!

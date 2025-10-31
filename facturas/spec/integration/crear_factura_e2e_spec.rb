@@ -30,7 +30,7 @@ RSpec.describe 'Flujo completo de facturas', :integration do
       body = JSON.parse(last_response.body)
       expect(body).to include('id', 'cliente_id' => '1', 'monto' => 45_000.0, 'fecha_emision' => '2025-10-31')
 
-      expect(a_request(:post, %r{auditoria\.test:5003/eventos})).to have_been_made.twice
+      expect(a_request(:post, %r{auditoria\.test:5003/eventos})).to have_been_made.times(3)
     end
   end
 

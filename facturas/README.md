@@ -124,3 +124,16 @@ El componente `Relay Runner` mantiene el outbox procesado en segundo plano media
 ```bash
 docker compose up relay-worker
 ```
+
+### 🧾 Validación y Respuesta de la DIAN
+
+Cada factura se valida contra el gateway de la DIAN (mock). La respuesta se almacena dentro del mismo registro de la factura, garantizando trazabilidad tributaria.
+
+| Campo | Descripción |
+|-------|-------------|
+| `dian_status` | Estado retornado por la DIAN (`ACEPTADO`, `RECHAZADO`, etc.) |
+| `dian_uuid` | Identificador único asignado por la DIAN |
+| `dian_response` | Respuesta completa serializada en JSON |
+| `fecha_validacion_dian` | Fecha/hora en que se validó la factura |
+
+Los datos se guardan en la misma transacción ACID que la factura y se reenvían mediante el patrón Outbox.

@@ -1,5 +1,7 @@
 require 'securerandom'
+require 'json'
 require_relative '../../domain/entities/factura'
+require_relative '../../infrastructure/persistence/factura_record'
 
 module Facturas
   module Application
@@ -36,12 +38,25 @@ module Facturas
             fecha_emision: validation.fecha_emision
           )
 
-          persisted = @repository.save(factura)
-          enviar_a_dian(persisted)
-          enviar_correo(cliente, persisted)
-          registrar_notificacion(persisted)
-          registrar_auditoria(persisted)
-          persisted
+          Facturas::Infrastructure::Persistence::FacturaRecord.transaction do
+            persisted = @repository.save(factura)
+
+            respuesta_dian = enviar_a_dian(persisted)
+            if respuesta_dian
+              persisted.dian_status = respuesta_dian[:status]
+              persisted.dian_uuid = respuesta_dian[:dian_id]
+              persisted.dian_response = respuesta_dian.to_json
+              persisted.fecha_validacion_dian = Time.now.utc
+              persisted = @repository.save(persisted)
+              registrar_validacion(persisted)
+            end
+
+            correo_enviado = enviar_correo(cliente, persisted)
+            registrar_notificacion(persisted) if correo_enviado
+            registrar_creacion(persisted)
+
+            persisted
+          end
         end
 
         private
@@ -52,14 +67,28 @@ module Facturas
           @dian_gateway.enviar_factura(factura.to_primitives)
         rescue StandardError => e
           warn "[WARN] Fallo al enviar a DIAN: #{e.message}"
+          nil
         end
 
         def enviar_correo(cliente, factura)
-          return unless @correo_gateway && cliente&.email
+          return false unless @correo_gateway && cliente&.email
 
           @correo_gateway.enviar_factura(cliente.email, factura.to_pdf)
+          true
         rescue StandardError => e
           warn "[WARN] Fallo al enviar correo: #{e.message}"
+          false
+        end
+
+        def registrar_validacion(factura)
+          return unless @auditoria_gateway
+
+          @auditoria_gateway.registrar_evento(
+            servicio: 'facturas',
+            entidad_id: factura.id,
+            accion: 'VALIDAR',
+            mensaje: 'Factura validada y aceptada por DIAN'
+          )
         end
 
         def registrar_notificacion(factura)
@@ -73,7 +102,7 @@ module Facturas
           )
         end
 
-        def registrar_auditoria(factura)
+        def registrar_creacion(factura)
           return unless @auditoria_gateway
 
           @auditoria_gateway.registrar_evento(

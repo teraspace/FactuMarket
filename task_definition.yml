@@ -1,0 +1,54 @@
+family: factumarket-facturas
+networkMode: awsvpc
+requiresCompatibilities:
+  - FARGATE
+cpu: "512"
+memory: "1024"
+executionRoleArn: arn:aws:iam::<account-id>:role/ecsTaskExecutionRole
+taskRoleArn: arn:aws:iam::<account-id>:role/factumarketTaskRole
+containerDefinitions:
+  - name: facturas-api
+    image: <account-id>.dkr.ecr.us-east-1.amazonaws.com/facturas:latest
+    essential: true
+    command: ["ruby", "interfaces/api.rb"]
+    portMappings:
+      - containerPort: 5002
+    environment:
+      - name: RACK_ENV
+        value: production
+      - name: AUDITORIA_URL
+        value: http://auditoria:5003/events
+      - name: ORACLE_HOST
+        value: <oracle-endpoint>
+    secrets:
+      - name: API_TOKEN
+        valueFrom: arn:aws:secretsmanager:us-east-1:<account-id>:secret:factumarket/api_token
+    logConfiguration:
+      logDriver: awslogs
+      options:
+        awslogs-group: /ecs/factumarket/facturas
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: api
+  - name: relay-worker
+    image: <account-id>.dkr.ecr.us-east-1.amazonaws.com/facturas:latest
+    essential: false
+    command: ["ruby", "bin/relay_runner.rb"]
+    environment:
+      - name: RACK_ENV
+        value: production
+      - name: AUDITORIA_URL
+        value: http://auditoria:5003/events
+      - name: ORACLE_HOST
+        value: <oracle-endpoint>
+    secrets:
+      - name: API_TOKEN
+        valueFrom: arn:aws:secretsmanager:us-east-1:<account-id>:secret:factumarket/api_token
+    logConfiguration:
+      logDriver: awslogs
+      options:
+        awslogs-group: /ecs/factumarket/facturas
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: relay
+tags:
+  - key: project
+    value: factumarket

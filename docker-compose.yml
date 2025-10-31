@@ -1,16 +1,21 @@
 services:
   clientes:
     build:
-      context: ./clientes
+      context: ./ClientesService
     container_name: clientes
     ports:
       - "5001:5001"
     environment:
+      API_TOKEN: supersecreto123
       ASPNETCORE_URLS: "http://0.0.0.0:5001"
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
-      DB_PROVIDER: "oracle"
-      ConnectionStrings__Clientes: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
+      ASPNETCORE_ENVIRONMENT: Development
+      DB_PROVIDER: sqlite
+      ConnectionStrings__Clientes: "Data Source=clientes.db"
+      # Alternativamente, para usar Oracle en lugar de SQLite:
+      # DB_PROVIDER: "oracle"
+      # ConnectionStrings__Clientes: "User Id=system;Password=Oracle123;Data Source=oracle-db:1521/FREEPDB1"
       DB_MAX_RETRIES: "40"
       DB_RETRY_DELAY_SECONDS: "15"
     depends_on:
@@ -28,6 +33,7 @@ services:
     ports:
       - "5002:5002"
     environment:
+      API_TOKEN: supersecreto123
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
       AUDITORIA_URL: "http://auditoria:5003"
@@ -49,6 +55,7 @@ services:
     ports:
       - "5003:5003"
     environment:
+      API_TOKEN: supersecreto123
       MONGO_URI: "mongodb://mongo-db:27017/factumarket"
       ORACLE_CONN: "system/Oracle123@oracle-db:1521/FREEPDB1"
     depends_on:

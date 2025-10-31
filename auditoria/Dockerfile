@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 5003
 
-CMD ["bundle", "exec", "ruby", "app.rb"]
+CMD ["ruby", "interfaces/api.rb"]
